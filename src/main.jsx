@@ -128,7 +128,7 @@ export default function App() {
     // 📩 Отправка уведомления в Telegram-бот
     try {
       const TELEGRAM_BOT_TOKEN = '9200701102:AAHFU6SxayTdkiVGA2PBUblIK3ZjL_CFm2A';
-      const TELEGRAM_CHAT_ID = '9200701102';
+      const TELEGRAM_CHAT_ID = '1183591842';
 
       const message = `
 🚗 *Новая запись в AUTOPOINT!*
