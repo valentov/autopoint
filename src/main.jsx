@@ -105,7 +105,7 @@ export default function App() {
     return isBooked || isBlocked;
   };
 
-  const handleCompleteBooking = (e) => {
+  const handleCompleteBooking = async (e) => {
     e.preventDefault();
     if (!selectedService || !selectedDate || !selectedTime) return;
 
@@ -124,6 +124,37 @@ export default function App() {
       status: 'confirmed',
       createdAt: new Date().toISOString()
     };
+
+    // 📩 Отправка уведомления в Telegram-бот
+    try {
+      const TELEGRAM_BOT_TOKEN = '9200701102:AAHFU6SxayTdkiVGA2PBUblIK3ZjL_CFm2A';
+      const TELEGRAM_CHAT_ID = '9200701102';
+
+      const message = `
+🚗 *Новая запись в AUTOPOINT!*
+
+Код брони: #${newBooking.bookingCode}
+👤 *Клиент:* ${newBooking.clientName}
+📞 *Телефон:* ${newBooking.clientPhone}
+🚘 *Авто:* ${newBooking.carModel}
+🛠 *Услуга:* ${newBooking.serviceName}
+📅 *Дата:* ${newBooking.date}
+⏰ *Время:* ${newBooking.time}
+💰 *Сумма:* ${newBooking.price} ₽
+      `;
+
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: TELEGRAM_CHAT_ID,
+          text: message,
+          parse_mode: 'Markdown',
+        }),
+      });
+    } catch (err) {
+      console.error('Ошибка отправки в Telegram:', err);
+    }
 
     setBookings(prev => [newBooking, ...prev]);
     setConfirmedBooking(newBooking);
@@ -343,7 +374,7 @@ export default function App() {
         )}
       </main>
     </div>
-    );
+  );
 }
 
 import ReactDOM from 'react-dom/client';
