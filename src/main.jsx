@@ -1,45 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wrench, ShieldCheck, Cpu, Calendar, Clock, User, Phone, Car, CheckCircle2, ChevronRight, ChevronLeft, Lock, Filter, Trash2, X, Menu, Sparkles, MapPin, MessageSquare, Search, Database, Info, Check } from 'lucide-react';
 
-// ==========================================
-// TYPES & INTERFACES
-// ==========================================
-export interface ServiceItem {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  duration: string;
-  category: string;
-}
-
-export interface Booking {
-  id: string;
-  bookingCode: string;
-  serviceId: string;
-  serviceName: string;
-  price: number;
-  date: string;
-  time: string;
-  clientName: string;
-  clientPhone: string;
-  carModel: string;
-  comment?: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  createdAt: string;
-}
-
-export interface BlockedSlot {
-  id: string;
-  date: string;
-  time: string;
-  reason?: string;
-}
-
-// ==========================================
-// INITIAL CONSTANTS & SERVICES DATA
-// ==========================================
-const SERVICES_DATA: ServiceItem[] = [
+const SERVICES_DATA = [
   { id: 'oil-change', name: 'Замена масла и фильтров', description: 'Полная замена моторного масла, масляного, воздушного и салонного фильтров.', price: 2500, duration: '45 мин', category: 'ТО' },
   { id: 'computer-diag', name: 'Компьютерная диагностика', description: 'Считывание ошибок всех электронных блоков управления, проверка датчиков, сканирование узлов.', price: 1500, duration: '30 мин', category: 'Диагностика' },
   { id: 'brake-pads', name: 'Замена тормозных колодок', description: 'Замена передних или задних тормозных колодок, очистка и смазка суппортов, проверка дисков.', price: 3000, duration: '60 мин', category: 'Тормозная система' },
@@ -49,14 +11,14 @@ const SERVICES_DATA: ServiceItem[] = [
 
 const TIME_SLOTS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
 
-const formatToDateKey = (date: Date): string => {
+const formatToDateKey = (date) => {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 };
 
-const INITIAL_BOOKINGS: Booking[] = [
+const INITIAL_BOOKINGS = [
   {
     id: 'b-1',
     bookingCode: 'AP-8921',
@@ -71,33 +33,14 @@ const INITIAL_BOOKINGS: Booking[] = [
     comment: 'Просьба залить масло 5W-30',
     status: 'confirmed',
     createdAt: new Date().toISOString()
-  },
-  {
-    id: 'b-2',
-    bookingCode: 'AP-4109',
-    serviceId: 'computer-diag',
-    serviceName: 'Компьютерная диагностика',
-    price: 1500,
-    date: formatToDateKey(new Date(Date.now() + 86400000)),
-    time: '14:00',
-    clientName: 'Елена Васильева',
-    clientPhone: '+7 (911) 987-65-43',
-    carModel: 'Audi Q5',
-    comment: 'Горит plug error on dashboard',
-    status: 'pending',
-    createdAt: new Date().toISOString()
   }
 ];
 
-// ==========================================
-// MAIN APP COMPONENT
-// ==========================================
 export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'main' | 'booking' | 'admin'>('main');
+  const [activeTab, setActiveTab] = useState('main');
   
-  // Core Data Persistence with LocalStorage
-  const [bookings, setBookings] = useState<Booking[]>(() => {
+  const [bookings, setBookings] = useState(() => {
     try {
       const saved = localStorage.getItem('autopoint_bookings');
       return saved ? JSON.parse(saved) : INITIAL_BOOKINGS;
@@ -106,7 +49,7 @@ export default function App() {
     }
   });
 
-  const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>(() => {
+  const [blockedSlots, setBlockedSlots] = useState(() => {
     try {
       const saved = localStorage.getItem('autopoint_blocked_slots');
       return saved ? JSON.parse(saved) : [];
@@ -123,29 +66,21 @@ export default function App() {
     localStorage.setItem('autopoint_blocked_slots', JSON.stringify(blockedSlots));
   }, [blockedSlots]);
 
-  // BOOKING WIZARD STATE
   const [bookingStep, setBookingStep] = useState(1);
-  const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>(formatToDateKey(new Date()));
-  const [selectedTime, setSelectedTime] = useState<string>('');
+  const [selectedService, setSelectedService] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(formatToDateKey(new Date()));
+  const [selectedTime, setSelectedTime] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [carModel, setCarModel] = useState('');
   const [clientComment, setClientComment] = useState('');
-  const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState(null);
 
-  // ADMIN STATE
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
   const [adminAuthError, setAdminAuthError] = useState(false);
-  const [adminDateFilter, setAdminDateFilter] = useState('');
-  const [adminStatusFilter, setAdminStatusFilter] = useState<'all' | string>('all');
-  const [adminSearchQuery, setAdminSearchQuery] = useState('');
-  const [manualBlockDate, setManualBlockDate] = useState(formatToDateKey(new Date()));
-  const [manualBlockTime, setManualBlockTime] = useState(TIME_SLOTS[0]);
 
-  // Handle phone mask & validation
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoneChange = (e) => {
     let val = e.target.value.replace(/\D/g, '');
     if (val.startsWith('8')) val = val.substring(1);
     if (val.length > 10) val = val.substring(0, 10);
@@ -157,24 +92,24 @@ export default function App() {
     setClientPhone(formatted);
   };
 
-  const handleSelectServiceFromCatalog = (service: ServiceItem) => {
+  const handleSelectServiceFromCatalog = (service) => {
     setSelectedService(service);
     setBookingStep(2);
     setActiveTab('booking');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const isSlotBooked = (date: string, time: string) => {
+  const isSlotBooked = (date, time) => {
     const isBooked = bookings.some(b => b.date === date && b.time === time && b.status !== 'cancelled');
     const isBlocked = blockedSlots.some(s => s.date === date && s.time === time);
     return isBooked || isBlocked;
   };
 
-  const handleCompleteBooking = (e: React.FormEvent) => {
+  const handleCompleteBooking = (e) => {
     e.preventDefault();
     if (!selectedService || !selectedDate || !selectedTime) return;
 
-    const newBooking: Booking = {
+    const newBooking = {
       id: 'b-' + Date.now(),
       bookingCode: 'AP-' + Math.floor(1000 + Math.random() * 9000),
       serviceId: selectedService.id,
@@ -195,7 +130,7 @@ export default function App() {
     setBookingStep(3);
   };
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = (e) => {
     e.preventDefault();
     if (adminPasswordInput === 'admin123') {
       setIsAdminAuthenticated(true);
@@ -207,7 +142,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-[#FF7628] selection:text-white">
-      {/* HEADER */}
       <header className="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('main')}>
@@ -242,7 +176,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* MAIN CONTENT AREA */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {activeTab === 'main' && (
           <div className="space-y-16">
